@@ -1,0 +1,123 @@
+* {
+  margin: 0;
+  padding: 0;
+  outline: none!important;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+}
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+html,
+body {
+  height: 100%;
+  font: 17px/25px 'SF UI Display', Arial, sans-serif;
+  cursor: default;
+  font-size-adjust: none;
+  -webkit-font-size-adjust: none;
+}
+a {
+  color: #038052;
+}
+a:hover {
+  text-decoration: none;
+}
+.faq-page {
+  color: #000;
+}
+.faq-page ul {
+  list-style: none;
+  margin: 0 30px;
+}
+.faq-page ul li {
+  position: relative;
+  border-bottom: 1px solid #ddd;
+  overflow: hidden;
+}
+.faq-page ul li input {
+  position: absolute;
+  left: -20px;
+  top: 0;
+  border: none;
+  background: none;
+  opacity: 0;
+}
+.faq-page ul li input:checked + label:after {
+  -webkit-transform: rotate(45deg);
+      -ms-transform: rotate(45deg);
+          transform: rotate(45deg);
+}
+.faq-page ul li input:checked + label + p {
+  max-height: 1500px;
+  padding-bottom: 12px;
+}
+.faq-page ul li label {
+  position: relative;
+  display: block;
+  padding: 12px 50px 12px 30px;
+  margin: 0 -30px;
+  font: 600 17px/21px 'SF UI Display', Arial, sans-serif;
+  cursor: pointer;
+}
+.faq-page ul li label:after {
+  content: '';
+  position: absolute;
+  right: 35px;
+  top: 18px;
+  width: 11px;
+  height: 11px;
+  border: solid #BCC0AA;
+  border-width: 0 3px 3px 0;
+  border-radius: 2px;
+  -webkit-transform: rotate(-45deg);
+      -ms-transform: rotate(-45deg);
+          transform: rotate(-45deg);
+  -webkit-transition: .3s;
+  transition: .3s;
+}
+.faq-page ul li p {
+  max-height: 0;
+  overflow: hidden;
+  color: #666;
+  -webkit-transition: .3s;
+  transition: .3s;
+}
+.faq-page ul li p a {
+  color: #038052!important;
+  text-decoration: underline;
+}
+.faq-page ul li p a:hover {
+  text-decoration: none;
+}
+.agreement-page {
+  padding: 20px 30px;
+  color: #000;
+}
+.agreement-page h1 {
+  margin-bottom: 10px;
+  font: 25px 'SF UI Display', Arial, sans-serif;
+}
+.agreement-page h3 {
+  margin-bottom: 10px;
+  font: 22px 'SF UI Display', Arial, sans-serif;
+}
+.agreement-page p {
+  margin-bottom: 15px;
+}
+.agreement-page ul {
+  list-style: none;
+}
+.agreement-page ul li {
+  margin-bottom: 10px;
+}
+.agreement-page ul li a {
+  color: #038052!important;
+  text-decoration: underline;
+}
+.agreement-page ul li a:hover {
+  text-decoration: none;
+}
+.agreement-page ul li ul {
+  margin-top: 10px;
+}

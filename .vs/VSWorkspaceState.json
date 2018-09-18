@@ -1,0 +1,16 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\src",
+    "\\src\\hooks",
+    "\\src\\models",
+    "\\src\\schemas",
+    "\\src\\services",
+    "\\src\\services\\codes",
+    "\\src\\services\\notifications",
+    "\\src\\services\\operations",
+    "\\src\\services\\users"
+  ],
+  "SelectedNode": "\\src\\authentication.js",
+  "PreviewInSolutionExplorer": false
+}

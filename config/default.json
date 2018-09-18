@@ -1,0 +1,48 @@
+{
+  "host": "localhost",
+  "port": 3030,
+  "public": "../public/",
+  "paginate": {
+    "default": 30,
+    "max": 50
+  },
+  "authentication": {
+    "secret": "a17544f8ac0f3bba4fe7b73ea55ff38902ec677c1168607729f65b96d01090987fb7aee82e7c965e24dfe2bcb8e6edd6bd69bea399ea00b2df09068eded4c0fe868ac6bed6124511c572262bde84c284ef11e619a3dee4741383399c22540b7777c26a95cbf12bf9bdf161177deea8b55f75db97c64231b9a46b345a346ea0ae8b31e60c98507a2086732f1c2de39e1fb751786bf7705c097c305603c2bc25cb0c5aece6683a17b0ce9cd072fbaad5ad5953f27acd6c70d297541d153c1c01a090a8d863f05ea919a602b28da163b77be8ff25650e6a11a0ba50d0901f64a3eba2b2bbfbe35057f948c10cf77f959119cc48f3e303c80bb250d23be8d3210eed",
+    "strategies": [
+      "jwt",
+      "local",
+      "mobile"
+    ],
+    "path": "/authentication",
+    "service": "users",
+    "jwt": {
+      "header": {
+        "type": "access"
+      },
+      "audience": "http://admin.bayanay.center",
+      "subject": "anonymous",
+      "issuer": "feathers",
+      "algorithm": "HS256",
+      "expiresIn": "1y"
+    },
+    "local": {
+      "name": "local",
+      "entity": "user",
+      "usernameField": "phone",
+      "passwordField": "password"
+    },
+    "mobile": {
+      "name": "mobile",
+      "entity": "user",
+      "usernameField": "phone",
+      "passwordField": "code"
+    },
+    "cookie": {
+      "enabled": true,
+      "name": "feathers-jwt",
+      "httpOnly": false,
+      "secure": false
+    }
+  },
+  "mongodb": "mongodb://localhost:27017/fserver"
+}
