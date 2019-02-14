@@ -9,7 +9,7 @@ module.exports = function isEnabled(options = {}) { // eslint-disable-line no-un
 
     if (!hook.params.provider) { return Promise.resolve(hook); }
 
-    if(_.get(hook, 'params.user.role') === 'admin') { return Promise.resolve(hook); }
+    if(_.get(hook, 'params.user.role') === 'admin') { return Promise.resolve(hook) }
 
     if(!_.get(hook, 'params.user') || _.isEmpty(hook.params.user)) {
 
@@ -17,10 +17,9 @@ module.exports = function isEnabled(options = {}) { // eslint-disable-line no-un
 
     } else if(!_.get(hook, 'params.user.isEnabled')) {
 
-      var name = _.get(hook, 'params.user.name') || _.get(hook, 'params.user.phone') || _.get(hook, 'params.user.email') || 'This user ';
+      var name = _.get(hook, 'params.user.name') || _.get(hook, 'params.user.phone') || _.get(hook, 'params.user.email') || 'This user'
 
       throw new errors.Forbidden(`${name} is disabled.`);
     }
   }
 };
-

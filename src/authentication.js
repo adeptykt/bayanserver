@@ -3,6 +3,7 @@ const errors = require('@feathersjs/errors')
 const jwt = require('@feathersjs/authentication-jwt')
 const local = require('@feathersjs/authentication-local')
 const _ = require('lodash')
+const sendEmail = require('./utils/send-email')
 
 const { sms } = require('./utils/sms')
 
@@ -44,6 +45,7 @@ module.exports = function () {
   class CodeVerifier extends Verifier {
     verify(req, phone, code, done) {
       app.service('codes').find({ query: {phone} }).then(function(response) {
+        console.log('CodeVerifier');
         var results = response.data || response
         if (!results.length) {
           done(null, false, { message: 'Телефон не зарегистрирован' })
@@ -118,6 +120,29 @@ module.exports = function () {
     res.send({MarketingSettings: {maxScoresDiscount: 50}})
   })
 
+  app.get('/v1/partner/elcert', apikeyVerify, function (req, res, next) {
+    if (!req.query.number) res.send({ errorCode: 'NumberNotExists', message: 'Нет номера сертификата' })
+    else app.service('elcerts').find({ query: { number: req.query.number } }).then(response => {
+      var results = response.data || response
+      if (!results.length) {
+        res.send({ errorCode: 'CertNotFound', message: 'Сертификат не найден' })
+      } else {
+        res.send(results[0])
+      }
+    }).catch(error => res.send({ errorCode: 'errorMongo', message: error }))
+  })
+
+  function calcScores(userId) {
+      let currentDate = new Date()
+      return app.service('operations').Model.aggregate([
+        { $match: { userId, status: 1, $or: [ { validAt: { $exists: true, $lt: currentDate } }, { validAt: { $exists: false } } ] } },
+        { $group: { _id: 0, scores: { $sum: '$scores' }, accrual: { $sum: '$accrual' } } }
+      ]).then(results => {
+        let scores = results.length > 0 ? Math.round((results[0].scores+results[0].accrual)*100)/100 : 0
+        return app.service('users').patch(userId, { scores })
+      })
+  }
+
   function getUserFromToken(code) {
     return new Promise((resolve, reject) => {
       let serviceName = code.length == 6 ? 'tokens' : 'cards'
@@ -129,7 +154,9 @@ module.exports = function () {
         } else {
           token = results[0]
           if (serviceName === 'cards' && token.blocked) return reject({ errorCode: 'CardIsBlocked', message: 'Карта заблокирована' })
-          app.service('users').get(token.userId).then(user => {
+          let user = calcScores(token.userId).then(user => {
+          // console.log('user', user);
+          // app.service('users').get(token.userId).then(user => {
             if (!user.isEnabled) return reject({ errorCode: 'UserIsBlocked', message: 'Пользователь заблокирован' })
             resolve(user)
           }).catch(error => {
@@ -143,19 +170,20 @@ module.exports = function () {
 
   function getUserFromPhone(phone) {
     return new Promise((resolve, reject) => {
-      app.service('users').find({ query: {phone} }).then((response) => {
+      app.service('users').find({ query: {phone} }).then(async (response) => {
         var results = response.data || response
         if (!results.length) {
           reject({errorCode: 'phoneNotFound', message: 'Пользователь не найден'})
         } else {
-          resolve(results[0])
+          let user = results[0]
+          user = await calcScores(user._id)
+          resolve(user)
         }
       })
     })
   }
 
   app.get('/v1/partner/customer', apikeyVerify, function (req, res, next) {
-    console.log('/v1/partner/customer: ' + req.query.code)
     if (req.query.phone) getUserFromPhone(req.query.phone).then(user => res.send(user)).catch(error => res.send(error))
     else getUserFromToken(req.query.code).then(user => res.send(user)).catch(error => res.send(error))
   })
@@ -233,7 +261,7 @@ module.exports = function () {
     //  if (req.body.action === "sendSMS") app.service('users').Model.update({ scores: { $gt: req.body.scoresgt, $lt: req.body.scoreslt } }, { $addToSet: { group: req.body.group } }, { multi: true }).then(result => { })
     //  res.send(results)
     //})
-})
+  })
 
   app.use('/v1/partner/operations', async function (req, res, next) {
     console.log('/v1/partner/operations: ' + req.query.userId)
@@ -415,7 +443,7 @@ module.exports = function () {
     console.log('/v1/partner/purchasepatch')
     app.service('operations').patch(req.body.id, { scores: -req.body.scores, cert: req.body.cert, cash: req.body.cash, total: req.body.total }).then(operation => res.send({ operation }) )
     //app.service('operations').patch(req.body.id, { cert: req.body.cert }).then(operation => res.send({ operation }))
-})
+  })
 
   app.post('/v1/partner/card', apikeyVerify, function (req, res) {
     // let userData = {phone: req.body.phone, name: req.body.name, surname: req.body.surname, patrono}
@@ -462,10 +490,23 @@ module.exports = function () {
     })
   })
 
+  app.post('/v1/partner/certificate', apikeyVerify, function (req, res) {
+    const id = req.body._id
+    delete req.body._id
+    console.log('post certificate:',  req.body)
+    app.service('certificates').update(id, req.body).then(response => {
+      var results = response.data || response
+      if (results.length > 0) {
+        let certificate = results[0]
+        res.send(certificate)
+      }
+    })
+  })
+
   app.post('/v1/partner/certificatepatch', apikeyVerify, async (req, res) => {
     req.body.soldAt = new Date(req.body.soldAt)
-    const id = req.body.id
-    delete req.body.id
+    const id = req.body._id
+    delete req.body._id
     console.log('certificatepatch', req.body, new Date(req.body.soldAt))
     certificate = await app.service('certificates').patch(id,
       { saleStore: req.body.saleStore, soldAt: req.body.soldAt, saleNumber: req.body.saleNumber, saleType: req.body.saleType }
@@ -576,6 +617,12 @@ module.exports = function () {
   //     res.send({res: "ok"})
   //   })
   // })
+
+  app.use('/sendmail', function (req, res, next) {
+    console.log('sendmail')
+    sendEmail('m135et@gmail.com', 666, 150000, 'Иванов Петр Иванович', new Date())
+    res.send({})
+  })
 
   app.use('/checkcert', function (req, res, next) {
     console.log('checkcert')
@@ -1295,7 +1342,32 @@ module.exports = function () {
     app.service('certificates').Model.update({ number: { $gte: gte, $lte: lte } }, { $set: { blocked: false } }, { multi: true })
       .then(result => res.send('ok'))
       .catch(error => res.send('error: ' + error.message))
+  })
 
+  app.use('/payment', async function (req, res, next) {
+    console.log('/payment body', req.body)
+    const paymentId = req.body.object.id
+    const status = req.body.object.status
+
+    const order = await app.service('orders').Model.findOne({ paymentId })
+    if (!order) {
+      console.log('payment ' + paymentId + ' not found');
+      res.send('notfound')
+      return
+    }
+    console.log('payment order', order);
+    // можно сделать дополнительную проверку платежа
+    // YandexCheckout.getPayment(paymentId)
+    //   .then(function(result) {
+    //     console.log({payment: result});
+    //   })
+    //   .catch(function(err) {
+    //     console.error(err);
+    //   })
+    const { _id, price, email, recipient, userId } = order
+    await app.service('orders').Model.updateOne({ _id }, { $set: { status } })
+    const elcerts = await app.service('elcerts').create({ price, sum: price, email, userId, recipient, orderId: _id })
+    res.send('ok')
   })
 
   cron.schedule("0 59 23 * * *", () => {
@@ -1312,14 +1384,17 @@ module.exports = function () {
   app.service('authentication').hooks({
     before: {
       create: [
+        hook => {
+          console.log('before', hook.params);
+        },
         authentication.hooks.authenticate(config.strategies),
         // This hook adds the `test` attribute to the JWT payload by
         // modifying params.payload.
-        hook => {
-          // make sure params.payload exists
-          hook.params.payload = hook.params.payload || {}
-          Object.assign(hook.params.payload, {role: hook.params.user.role, userId: hook.params.user._id})
-        }
+        // hook => {
+        //   // make sure params.payload exists
+        //   hook.params.payload = hook.params.payload || {}
+        //   Object.assign(hook.params.payload, {role: hook.params.user.role, userId: hook.params.user._id})
+        // }
       ],
       remove: [
         authentication.hooks.authenticate('jwt')
@@ -1328,7 +1403,7 @@ module.exports = function () {
     after: {
       create: [
         hook => {
-
+          console.log('after', hook.params);
           if (!_.get(hook, 'params.user')) {
             return Promise.reject(new errors.Forbidden('Credentials incorrect'))
           }

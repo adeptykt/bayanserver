@@ -1,3 +1,5 @@
+config/
+
 # Logs
 logs
 *.log
@@ -110,3 +112,4 @@ $RECYCLE.BIN/
 # Others
 lib/
 data/
+.vs/

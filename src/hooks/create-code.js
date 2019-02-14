@@ -1,6 +1,6 @@
 'use strict';
 const _ = require('lodash')
-const util = require('util') 
+const util = require('util')
 const { sms } = require('../utils/sms');
 const errors = require('feathers-errors');
 
@@ -20,7 +20,7 @@ function getUniqueCode(service, num) {
 
 module.exports = options => async hook => {
   console.log('code create: ' + util.inspect(options, false, null))
-      
+
   let service = hook.app.service(options.service)
   let query = {}
 
@@ -35,6 +35,7 @@ module.exports = options => async hook => {
   let phone = ''
   if (options.type === 'code') {
     phone = hook.data.phone
+    console.log('phone:', hook.data);
 
     let users = await hook.app.service('users').find({ query: {phone} }).then(function(found) {
       if (!Array.isArray(found) && found.data) found = found.data

@@ -1,18 +1,17 @@
 const { authenticate } = require('@feathersjs/authentication').hooks
 const { restrictToOwner } = require('feathers-authentication-hooks')
 const commonHooks = require('feathers-hooks-common')
-const addId = require('../../hooks/add-id')
-const isEnabled = require('../../hooks/is-enabled')
-const calcScores = require('../../hooks/calc-scores')
+const local = require('@feathersjs/authentication-local')
 const logger = require('../../hooks/logger')
+const orderCreateBefore = require('../../hooks/order-create-before')
+const orderCreateAfter = require('../../hooks/order-create-after')
 const hasPermissionBoolean = require('../../hooks/has-permission-boolean')
 
 const restrict = [
   logger(),
   authenticate('jwt'),
-  isEnabled(),
   commonHooks.unless(
-    hasPermissionBoolean('manageOperations'),
+    hasPermissionBoolean('manageOrders'),
     restrictToOwner({
       idField: '_id',
       ownerField: 'userId'
@@ -20,25 +19,30 @@ const restrict = [
   )
 ]
 
+function disable(context) {
+  throw new Error('You do not have the permissions to access this.')
+}
+
 module.exports = {
   before: {
     all: [ authenticate('jwt') ],
-    find: [ ...restrict ],
+    find: [ disable ],
     get: [],
-    create: [ isEnabled() ],
-    update: [],
-    patch: [],
-    remove: []
+    create: [ orderCreateBefore() ],
+    update: [ disable ],
+    patch: [ disable ],
+    remove: [ disable ]
   },
 
+  // all: [ local.hooks.protect('paymentId', 'idempotenceKey') ],
   after: {
     all: [],
     find: [],
-    get: [ addId() ],
-    create: [ calcScores() ],
-    update: [ addId(), calcScores() ],
-    patch: [ addId(), calcScores() ],
-    remove: [ calcScores(), hook => { hook.result = {data: 'Remove succesful'} } ]
+    get: [],
+    create: [ orderCreateAfter() ],
+    update: [],
+    patch: [],
+    remove: []
   },
 
   error: {

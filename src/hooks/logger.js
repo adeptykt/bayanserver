@@ -19,6 +19,7 @@ module.exports = function () {
     }
 
     logger.info(message);
+    // logger.debug('hook', hook);
     logger.debug('hook.data', hook.data);
     logger.debug('hook.params', hook.params);
 

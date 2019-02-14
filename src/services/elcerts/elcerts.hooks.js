@@ -1,14 +1,11 @@
 const { authenticate } = require('@feathersjs/authentication').hooks
 const { restrictToOwner } = require('feathers-authentication-hooks')
 const commonHooks = require('feathers-hooks-common')
-const addId = require('../../hooks/add-id')
 const isEnabled = require('../../hooks/is-enabled')
-const calcScores = require('../../hooks/calc-scores')
-const logger = require('../../hooks/logger')
 const hasPermissionBoolean = require('../../hooks/has-permission-boolean')
+const checkElcerts = require('../../hooks/check-elcerts')
 
 const restrict = [
-  logger(),
   authenticate('jwt'),
   isEnabled(),
   commonHooks.unless(
@@ -17,7 +14,8 @@ const restrict = [
       idField: '_id',
       ownerField: 'userId'
     })
-  )
+  ),
+  checkElcerts
 ]
 
 module.exports = {
@@ -25,7 +23,7 @@ module.exports = {
     all: [ authenticate('jwt') ],
     find: [ ...restrict ],
     get: [],
-    create: [ isEnabled() ],
+    create: [],
     update: [],
     patch: [],
     remove: []
@@ -34,11 +32,11 @@ module.exports = {
   after: {
     all: [],
     find: [],
-    get: [ addId() ],
-    create: [ calcScores() ],
-    update: [ addId(), calcScores() ],
-    patch: [ addId(), calcScores() ],
-    remove: [ calcScores(), hook => { hook.result = {data: 'Remove succesful'} } ]
+    get: [],
+    create: [],
+    update: [],
+    patch: [],
+    remove: []
   },
 
   error: {

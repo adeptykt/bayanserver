@@ -44,5 +44,8 @@
       "secure": false
     }
   },
-  "mongodb": "mongodb://localhost:27017/fserver"
+  "mongodb": "mongodb://admin:Zdf1740@localhost:27017/fserver",
+  "yandex_shopId": "577548",
+  "yandex_secretKey": "test_4USH5orTde-BtEmmIDHTAdnQHXVfMBmnNxptlVhlViU",
+  "sb_token": "pn9vkgtlqv66cr943i4p2ptane"
 }
