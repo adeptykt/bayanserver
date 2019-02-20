@@ -3,7 +3,7 @@ const errors = require('@feathersjs/errors')
 const jwt = require('@feathersjs/authentication-jwt')
 const local = require('@feathersjs/authentication-local')
 const _ = require('lodash')
-const sendEmail = require('./utils/send-email')
+const sendElcert = require('./utils/send-elcert')
 
 const { sms } = require('./utils/sms')
 
@@ -620,7 +620,7 @@ module.exports = function () {
 
   app.use('/sendmail', function (req, res, next) {
     console.log('sendmail')
-    sendEmail('m135et@gmail.com', 666, 150000, 'Иванов Петр Иванович', new Date())
+    sendElcert('m135et@gmail.com', 666, 150000, 'Иванов Петр Иванович', new Date())
     res.send({})
   })
 
@@ -1150,6 +1150,48 @@ module.exports = function () {
     }
   })
 
+  app.use('/statelcerts', {
+    async find(hook) {
+      let query = Object.assign({ soldAt: { $exists: true } }, hook.query)
+      console.log('statelcerts', query)
+      if (query.soldAt) query.soldAt.$gte = startday(query.soldAt.$gte)
+      if (query.soldAt) query.soldAt.$lte = endday(query.soldAt.$lte)
+      let [summary, series, series2] = await Promise.all([
+        app.service('elcerts').Model.aggregate([
+          { $match: query },
+          {
+            $project: {
+              price: 1,
+              count: { $add: 1 },
+              canceledCount: { $add: { $cond: { if: { $eq: ["$canceled", true] }, then: 1, else: 0 } } },
+              canceledSum: { $add: { $cond: { if: { $eq: ["$canceled", true] }, then: "$price", else: 0 } } },
+            }
+          },
+          { $group: { _id: 0, soldSum: { $sum: "$price" }, soldCount: { $sum: "$count" }, canceledSum: { $sum: "$canceledSum" }, canceledCount: { $sum: "$canceledCount" } } }
+        ])
+          .then(results => {
+            delete results[0]._id
+            return results[0]
+          }),
+        app.service('elcerts').Model.aggregate([
+          { $match: query },
+          { $project: { date: { $dateToString: { format: "%Y.%m.%d", date: "$soldAt" } }, count: { $add: 1 } } },
+          { $group: { _id: "$date", count: { $sum: "$count" } } },
+          { $sort: { _id: 1 } }
+        ])
+          .then(results => { return getStats(results, query.soldAt.$gte, query.soldAt.$lte) }),
+        app.service('elcerts').Model.aggregate([
+          { $match: Object.assign({}, query, { canceled: true }) },
+          { $project: { date: { $dateToString: { format: "%Y.%m.%d", date: "$soldAt" } }, count: { $add: 1 } } },
+          { $group: { _id: "$date", count: { $sum: "$count" } } },
+          { $sort: { _id: 1 } }
+        ])
+          .then(results => { return getStats(results, query.soldAt.$gte, query.soldAt.$lte) }),
+      ])
+      return Promise.resolve({ summary, series, series2 })
+    }
+  })
+
   async function checkExpired_(action) {
     console.log('checkExpired: ' + action)
     let currentDate = new Date()
@@ -1332,7 +1374,6 @@ module.exports = function () {
     app.service('certificates').Model.update({ number: { $gte: gte, $lte: lte } }, { $set: { reason: req.query.reason, blocked: true } }, { multi: true })
       .then(result => res.send('ok'))
       .catch(error => res.send('error: ' + error.message))
-
   })
 
   app.use('/unblockcertificates', (req, res, next) => {
@@ -1366,7 +1407,9 @@ module.exports = function () {
     //   })
     const { _id, price, email, recipient, userId } = order
     await app.service('orders').Model.updateOne({ _id }, { $set: { status } })
-    const elcerts = await app.service('elcerts').create({ price, sum: price, email, userId, recipient, orderId: _id })
+    const D = new Date()
+    const expiredAt = D.setMonth(D.getMonth() + 12)
+    const elcerts = await app.service('elcerts').create({ price, sum: price, email, userId, recipient, orderId: _id, expiredAt })
     res.send('ok')
   })
 
@@ -1384,17 +1427,14 @@ module.exports = function () {
   app.service('authentication').hooks({
     before: {
       create: [
-        hook => {
-          console.log('before', hook.params);
-        },
         authentication.hooks.authenticate(config.strategies),
         // This hook adds the `test` attribute to the JWT payload by
         // modifying params.payload.
-        // hook => {
-        //   // make sure params.payload exists
-        //   hook.params.payload = hook.params.payload || {}
-        //   Object.assign(hook.params.payload, {role: hook.params.user.role, userId: hook.params.user._id})
-        // }
+        hook => {
+          // make sure params.payload exists
+          hook.params.payload = hook.params.payload || {}
+          Object.assign(hook.params.payload, {role: hook.params.user.role, userId: hook.params.user._id})
+        }
       ],
       remove: [
         authentication.hooks.authenticate('jwt')
@@ -1403,7 +1443,6 @@ module.exports = function () {
     after: {
       create: [
         hook => {
-          console.log('after', hook.params);
           if (!_.get(hook, 'params.user')) {
             return Promise.reject(new errors.Forbidden('Credentials incorrect'))
           }

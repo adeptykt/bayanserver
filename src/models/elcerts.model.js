@@ -34,7 +34,8 @@ module.exports = function (app) {
     userId: { type: global.mongoose.Schema.ObjectId },
     orderId: { type: global.mongoose.Schema.ObjectId },
     recipient: { type: String },
-    createdAt: { type: Date, default: Date.now }
+    createdAt: { type: Date, default: Date.now },
+    expiredAt: { type: Date, default: Date.now }
   })
 
   elcerts.plugin(autoIncrement.plugin, { model: 'elcerts', field: 'number' })

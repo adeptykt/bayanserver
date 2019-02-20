@@ -18,7 +18,7 @@ module.exports = function (app) {
   autoIncrement.initialize(mongooseClient.connection)
 
   const orders = new Schema({
-    userId: { type: global.mongoose.Schema.ObjectId, required: true },
+    userId: { type: global.mongoose.Schema.ObjectId },
     // userId: { type: String, required: true },
     status: { type: String, required: true, default: 'pending', enum: statuses },
     price: { type: Number, required: true },

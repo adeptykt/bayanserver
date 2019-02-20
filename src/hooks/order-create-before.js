@@ -17,7 +17,7 @@ module.exports = (options = {}) => async hook => {
       throw new Error('Незаполнено ФИО получателя сертификата')
     }
     const idempotenceKey = uuid4()
-    set(hook.data, 'userId', userId)
+    if (userId) set(hook.data, 'userId', userId)
     set(hook.data, 'status', 'pending')
     set(hook.data, 'idempotenceKey', idempotenceKey)
 

@@ -1,7 +1,7 @@
 const { get, set } = require('lodash')
 const axios = require('axios')
-const server = 'https://3dsec.sberbank.ru'
-const sendEmail = require('../utils/send-email')
+const server = 'https://securepayments.sberbank.ru'
+const sendElcert = require('../utils/send-elcert')
 
 module.exports = async hook => {
   console.log('check-elcerts');
@@ -20,9 +20,11 @@ module.exports = async hook => {
           // const Elcert = hook.app.service('elcerts').Model
           // const elcert = new Elcert({ price, sum: price, email, userId, recipient, orderId })
           // await elcert.save()
-          const elcert = await hook.app.service('elcerts').create({ price, sum: price, email, userId, recipient, orderId })
+          const D = new Date()
+          const expiredAt = D.setMonth(D.getMonth() + 12)
+          const elcert = await hook.app.service('elcerts').create({ price, sum: price, email, userId, recipient, orderId, expiredAt })
           console.log('elcert', elcert);
-          sendEmail(email, elcert.number, price, recipient, elcert.createdAt)
+          sendElcert(email, elcert.number, price, recipient, elcert.expiredAt)
           status = 'succeeded'
           break
         case 6:
