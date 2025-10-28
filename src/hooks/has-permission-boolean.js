@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const errors = require('feathers-errors');
+const errors = require('@feathersjs/errors');
 
 module.exports = function hasPermissionBoolean(permission) {
 
@@ -11,7 +11,7 @@ module.exports = function hasPermissionBoolean(permission) {
     if(
         !_.get(hook, 'params.user.role') === 'admin' ||
 
-        !_.get(hook, 'params.user.permissions') || 
+        !_.get(hook, 'params.user.permissions') ||
 
         !hook.params.user.permissions.includes(permission)
 
@@ -27,5 +27,5 @@ module.exports = function hasPermissionBoolean(permission) {
 
     }
   }
-  
+
 };

@@ -1,5 +1,5 @@
 const _ = require('lodash');
-const errors = require('feathers-errors');
+const errors = require('@feathersjs/errors');
 
 module.exports = function hasPermission(permission) {
   return function(hook) {

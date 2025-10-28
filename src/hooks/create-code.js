@@ -2,7 +2,7 @@
 const _ = require('lodash')
 const util = require('util')
 const { sms } = require('../utils/sms');
-const errors = require('feathers-errors');
+const errors = require('@feathersjs/errors');
 
 function getUniqueCode(service, num) {
   let len = num.toString().length;
@@ -51,7 +51,7 @@ module.exports = options => async hook => {
 
   let code = (phone === '9644169675') ? '9999' : await getUniqueCode(service, options.number)
   // console.log(`${options.service} code: ${code}`)
-  await service.remove(null, query)
+  // await service.remove(null, query)
   Object.assign(hook.data, query, {code})
   if (options.type === 'code' && phone !== '9644169675') sms(phone, 'Ваш код подтверждения: ' + code)
   console.log('code: ' + code)

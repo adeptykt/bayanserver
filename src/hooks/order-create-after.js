@@ -1,46 +1,17 @@
 const { get, set } = require('lodash')
 const YandexCheckout = require('yandex-checkout')
 const uuid4 = require('uuid4')
+const https = require('https')
 const axios = require('axios')
-const sendElcert = require('../utils/send-elcert')
+const checkOrder = require('../utils/check-order')
 const server = 'https://securepayments.sberbank.ru'
 // const server = 'https://62.76.205.110'
 
-async function checkCert(app, orderId) {
-  const token = app.get('sb_token')
-  const { data: answer } = await axios.get(server + '/payment/rest/getOrderStatusExtended.do', { params: { token, orderId } })
-  // console.log('checkCert', answer);
-  let status
-  switch (answer.orderStatus) {
-    case 2:
-      const order = await app.service('orders').Model.findOne({ paymentId: orderId })
-      const { _id, price, email, recipient } = order
-      const D = new Date()
-      const expiredAt = D.setMonth(D.getMonth() + 12)
-      const elcert = await app.service('elcerts').create({ price, sum: price, email, recipient, orderId: _id, expiredAt })
-      console.log('elcert', elcert);
-      sendElcert(email, elcert.number, price, recipient, elcert.expiredAt)
-      status = 'succeeded'
-      break
-    case 6:
-      status = 'expired'
-      break
-    case 3:
-      status = 'canceled'
-      break
-    default:
-      return false
-  }
-  console.log('status', status);
-  await app.service('orders').Model.updateOne({ paymentId: orderId }, { $set: { status } })
-  return true
-}
-
 timerCheck = (app, orderId) => async () => {
   console.log('timerCheck', orderId);
-  const result = await checkCert(app, orderId)
+  const result = await checkOrder(app, orderId)
   console.log('timerCheck result', result);
-  if (!result) setTimeout(timerCheck(app, orderId), 30000)
+  if (!result) setTimeout(timerCheck(app, orderId), 60000)
 }
 
 module.exports = (options = {}) => async hook => {
@@ -80,8 +51,8 @@ module.exports = (options = {}) => async hook => {
       orderNumber: number.toString(),
       amount: total * 100,
       // returnUrl: 'http://localhost:3001/certificates',
-      returnUrl: 'http://bayanay.center/certificates',
-      description: "Заказ №" + number
+      returnUrl: 'http://bayanay.store/certificates',
+      // description: "Заказ №" + number
     }
     // console.log('payment', payment);
 
@@ -99,14 +70,19 @@ module.exports = (options = {}) => async hook => {
     // 	data: payment
     // })
 
-    const { data: answer } = await axios.get(server + '/payment/rest/register.do', { params: payment })
+    const httpsAgent = new https.Agent({ rejectUnauthorized: false })
+    // axios.defaults.httpsAgent = httpsAgent
+
+    console.log('----------order-create-after1:', payment);
+    const { data: answer } = await axios.get(server + '/payment/rest/register.do', { params: payment, httpsAgent })
+    console.log('----------order-create-after2:', answer);
     // console.log('answer', answer);
     if (answer.errorCode) {
       set(hook.result, 'errorCode', answer.errorCode)
       set(hook.result, 'errorMessage', answer.errorMessage)
     } else {
       set(hook.result, 'confirmation_url', answer.formUrl)
-      hook.app.service('orders').Model.updateOne({ _id: orderId }, { $set: { paymentId: answer.orderId } }).then(res => {
+      hook.app.service('orders').Model.updateOne({ _id: orderId }, { $set: { paymentId: answer.orderId, url: answer.formUrl } }).then(res => {
         setTimeout(timerCheck(hook.app, answer.orderId), 60000)
       })
     }

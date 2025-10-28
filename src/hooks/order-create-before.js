@@ -10,7 +10,7 @@ module.exports = (options = {}) => async hook => {
     if (!patternEmail.test(email)) {
       throw new Error('Неверный email')
     }
-    if (!(price >= 1 && price <= 50000)) {
+    if (!(price >= 500 && price <= 50000)) {
       throw new Error('Должно быть не менее 500 и не более 50 000')
     }
     if (recipient.trim() == '') {
@@ -18,6 +18,7 @@ module.exports = (options = {}) => async hook => {
     }
     const idempotenceKey = uuid4()
     if (userId) set(hook.data, 'userId', userId)
+    set(hook.data, 'total', price * 1.05)
     set(hook.data, 'status', 'pending')
     set(hook.data, 'idempotenceKey', idempotenceKey)
 
