@@ -14,7 +14,7 @@ function createHTMLCert(email, number, price, recipient, date, barcode) {
   '<body style="margin: 0; font-family: Tahoma;">' +
   '<div style="width: 600px; height: 417px; font-size: 24px; font-weight: bold; text-align: center; border: 1px solid #ddd;">' +
   '<div style="position: absolute; left: 020px; top: 020px; width: 200px; text-align: left">ЭЛЕКТРОННЫЙ ПОДАРОЧНЫЙ СЕРТИФИКАТ</div>' +
-  '<img style="position: absolute; left: 394px; top: 020px;" src="./logo.png" />' +
+  '<img style="position: absolute; left: 394px; top: 020px;" src="logo.png" />' +
   '<svg style="position: absolute; left: 000px; top: 130px; width: 600px;" id="barcode"></svg>' +
   '<div style="position: absolute; left: 000px; top: 240px; width: 600px;">' + price.toPhrase() + '</div>' +
   '<div style="position: absolute; left: 020px; top: 325px; width: 400px; font-size: 12px; font-weight: normal; text-align: left">Этот подарочный сертификат действителен только при предъявлении паспорта лично персоной, указанной как одаряемый при покупке сертификата. Только это лицо может погасить этот электронный сертификат.</div>' +
@@ -26,22 +26,26 @@ function createHTMLCert(email, number, price, recipient, date, barcode) {
   '</html>'
 }
 
+// width: "450px",
+// height: "315px",
 const config = {
-  // width: "450px",
-  // height: "315px",
-  base: "file:///c:/nginx/html/"
+  "format": "Letter",
+  "base": "file:///opt/cert/static/"
 }
 
 const transport = nodemailer.createTransport({
   service: "Mail.ru",
   auth: {
-      user: "admin@bayanay.center",
-      pass: "xpqV43&OQFyp"
+      user: "bayanay.store",
+      // pass: "VEkxxHdt1ceHnWier1jN"
+      pass: "ftNFK3JZnfuk03kJ9tSZ"
   }
 })
+// user: "admin@bayanay.center",
+// pass: "xpqV43&OQFyp"
 
 const mailOptions = {
-  from: "Байанай-Центр <admin@bayanay.center>", // sender address
+  from: "Байанай-Центр <bayanay.store@mail.ru>", // sender address
   to: '', // list of receivers
   subject: "Вам подарили сертификат", // Subject line
   text: "Сертификат", // plaintext body
@@ -52,6 +56,7 @@ const mailOptions = {
 async function sendElcert(email, number, price, recipient, date) {
   const barcode = generateEan13(number)
   const html = createHTMLCert(email, number, price, recipient, date, barcode)
+  mailOptions.attachments = []
   await pdf.create(html, config).toStream(function(err, stream) {
     mailOptions.to = email
     mailOptions.attachments.push({ filename: 'certificate.pdf', content: stream })

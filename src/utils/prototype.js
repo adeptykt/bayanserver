@@ -258,3 +258,8 @@ Date.prototype.toLocal = function() {
   return d.getDate() + "." + two(d.getMonth() + 1) + "." + two(d.getFullYear())
   // + " " + two(d.getHours()) + ":" + two(d.getMinutes()) + ":" + two(d.getSeconds())
 }
+
+Array.prototype.append = function(item) {
+  this.push(item)
+  return this
+}
