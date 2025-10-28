@@ -17,4 +17,6 @@ module.exports = {
     card: { type: String },
     sms: { type: Boolean },
     group: [ Number ],
+    listScores: { type: Array },
+    lastDate: { type: Date, default: Date.now }
 };

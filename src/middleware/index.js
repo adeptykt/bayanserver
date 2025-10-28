@@ -1,6 +1,6 @@
 const path = require('path');
-const handler = require('feathers-errors/handler');
-const notFound = require('feathers-errors/not-found');
+// const handler = require('feathers-errors/handler');
+// const NotFound = require('@feathersjs/errors');
 
 module.exports = function () {
   // Add your custom middleware here. Remember, that
@@ -15,6 +15,6 @@ module.exports = function () {
     res.send($.html());
   });
 
-  app.use(notFound());
-  app.use(handler());
+  // app.use(NotFound());
+  // app.use(handler());
 };

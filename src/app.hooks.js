@@ -24,7 +24,7 @@ module.exports = {
   },
 
   error: {
-    all: [],
+    all: [ logger() ],
     find: [],
     get: [],
     create: [],
