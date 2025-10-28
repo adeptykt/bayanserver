@@ -12,7 +12,8 @@ module.exports = function () {
   const options = {
     name: 'certificates',
     Model,
-    paginate
+    paginate,
+    whitelist: [ '$exists', '$gt', '$lt', '$gte', '$lte' ]
   };
 
   // Initialize our service with any options it requires

@@ -1,5 +1,6 @@
 const { authenticate } = require('@feathersjs/authentication').hooks
-const { restrictToOwner } = require('feathers-authentication-hooks')
+// const { restrictToOwner } = require('feathers-authentication-hooks')
+const restrictUser = require('../../hooks/restrict-user')
 const commonHooks = require('feathers-hooks-common')
 const isEnabled = require('../../hooks/is-enabled')
 const hasPermissionBoolean = require('../../hooks/has-permission-boolean')
@@ -10,10 +11,7 @@ const restrict = [
   isEnabled(),
   commonHooks.unless(
     hasPermissionBoolean('manageOperations'),
-    restrictToOwner({
-      idField: '_id',
-      ownerField: 'userId'
-    })
+    restrictUser({ idField: 'userId' })
   ),
   checkElcerts
 ]

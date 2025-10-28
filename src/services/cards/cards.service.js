@@ -12,7 +12,8 @@ module.exports = function () {
   const options = {
     name: 'cards',
     Model,
-    paginate
+    paginate,
+    whitelist: [ '$options', '$regex' ]
   };
 
   // Initialize our service with any options it requires
