@@ -22,10 +22,14 @@ const seed = require('./seed')
 
 const mongoose = require('./mongoose')
 
-const app = express(feathers())
+// Подключаем новые модули роутов
+const partnerRoutes = require('./routes/partner')
+const statsRoutes = require('./routes/stats')
+const utilsRoutes = require('./routes/utils')
+const webhooksRoutes = require('./routes/webhooks')
+const cronTasks = require('./jobs/cron-tasks')
 
-const cron = require('node-cron')
-const exec = require('child_process').exec
+const app = express(feathers())
 
 // Load app configuration
 app.configure(configuration())
@@ -52,6 +56,12 @@ app.configure(services)
 
 //app.configure(seed)
 
+// Configure routes
+app.configure(partnerRoutes)
+app.configure(statsRoutes)
+app.configure(utilsRoutes)
+app.configure(webhooksRoutes)
+
 // Configure other middleware (see `middleware/index.js`)
 app.configure(middleware)
 
@@ -64,18 +74,8 @@ app.use(express.errorHandler({ logger }))
 
 app.hooks(appHooks)
 
-function two(s) { return ("0" + s).slice(-2) }
-function date(d) { return two(d.getYear()) + '-' + two(d.getMonth() + 1) + '-' + two(d.getDate()) }
-cron.schedule("0 0 1 * * *", () => {
-  exec(`"c:\\Program Files\\MongoDB\\Server\\3.4\\bin\\mongodump.exe" --db fserver --out e:\\Dropbox\\backups\\${date(new Date)}`, (error, stdout, stderr) => {
-    if (error) {
-      console.error(`exec error: ${error}`)
-      return
-    }
-    console.log(`stdout: ${stdout}`)
-    console.log(`stderr: ${stderr}`)
-  })
-})
+// Initialize cron tasks
+app.configure(cronTasks)
 
 console.log('\nRunning under Node.js version ' + process.versions.node + ' on ' + process.arch + '-type processor, ' + process.platform + ' platform.')
 
