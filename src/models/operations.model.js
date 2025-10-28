@@ -20,6 +20,11 @@ const statuses = [
   2, // операция отменена
 ]
 
+const kinds = [
+  0, // обычные бонусы
+  1, // оружие, патроны
+]
+
 module.exports = function (app) {
   const mongooseClient = app.get('mongooseClient');
   const { Schema } = mongooseClient;
@@ -40,7 +45,8 @@ module.exports = function (app) {
     createdAt: { type: Date, default: Date.now },
     validAt: { type: Date },
     expiredAt: { type: Date },
-    expired: { type: Boolean }
+    expired: { type: Boolean },
+    kind: { type: Number, enum: kinds },
   });
 
   return mongooseClient.model('operations', operations);

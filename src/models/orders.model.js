@@ -28,6 +28,7 @@ module.exports = function (app) {
     number: { type: Number, required: true },
     paymentId: { type: String },
     idempotenceKey: { type: String },
+    url: { type: String },
     createdAt: { type: Date, default: Date.now }
   });
 
