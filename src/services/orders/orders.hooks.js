@@ -1,5 +1,4 @@
 const { authenticate } = require('@feathersjs/authentication').hooks
-const { restrictToOwner } = require('feathers-authentication-hooks')
 const commonHooks = require('feathers-hooks-common')
 const local = require('@feathersjs/authentication-local')
 const logger = require('../../hooks/logger')
@@ -10,13 +9,7 @@ const hasPermissionBoolean = require('../../hooks/has-permission-boolean')
 const restrict = [
   logger(),
   authenticate('jwt'),
-  commonHooks.unless(
-    hasPermissionBoolean('manageOrders'),
-    restrictToOwner({
-      idField: '_id',
-      ownerField: 'userId'
-    })
-  )
+  hasPermissionBoolean('manageOrders')
 ]
 
 function disable(context) {
@@ -26,7 +19,7 @@ function disable(context) {
 module.exports = {
   before: {
     all: [],
-    find: [ disable ],
+    find: [ ...restrict ],
     get: [],
     create: [],
     update: [ disable ],

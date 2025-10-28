@@ -1,6 +1,7 @@
 const { authenticate } = require('@feathersjs/authentication').hooks
 const commonHooks = require('feathers-hooks-common')
-const { restrictToOwner } = require('feathers-authentication-hooks')
+// const { restrictToOwner } = require('feathers-authentication-hooks')
+const restrictUser = require('../../hooks/restrict-user')
 const { hashPassword } = require('@feathersjs/authentication-local').hooks
 const logger = require('../../hooks/logger')
 const idToObjectId = require('../../hooks/idToObjectId')
@@ -11,16 +12,15 @@ const hasPermissionBoolean = require('../../hooks/has-permission-boolean')
 const checkPassword = require('../../hooks/check-password')
 const setDefaultRole = require('../../hooks/set-default-role')
 const setFirstUserToRole = require('../../hooks/set-first-user-to-role')
+const userGetAfter = require('../../hooks/user-get-after')
+const globalHooks = require('../../hooks');
 
 const restrict = [
   authenticate('jwt'),
   isEnabled(),
   commonHooks.unless(
     hasPermissionBoolean('manageUsers'),
-    restrictToOwner({
-      idField: '_id',
-      ownerField: '_id'
-    })
+    restrictUser()
   )
 ]
 
@@ -43,16 +43,16 @@ const serializeSchema = {
 module.exports = {
   before: {
     all: [],
-    find: [...restrict, idToObjectId()],
+    find: [...restrict, idToObjectId(), globalHooks.searchRegex()],
     get: [...restrict],
     create: [
       authenticate('jwt'),
-      hashPassword(),
+      hashPassword('password'),
       setDefaultRole(),
       setFirstUserToRole({role: 'admin'}),
     ],
-    update: [ ...restrict, hashPassword(), checkPassword() ],
-    patch: [  ...restrict, hashPassword() ],
+    update: [ ...restrict, hashPassword('password'), checkPassword() ],
+    patch: [  ...restrict, hashPassword('password') ],
     // create: [ authenticate('jwt'), hashPassword({passwordField: 'code'}) ],
     // update: [ ...restrict, hashPassword({passwordField: 'code'}) ],
     // patch: [  ...restrict, hashPassword({passwordField: 'code'}) ],
@@ -73,6 +73,7 @@ module.exports = {
     get: [
       commonHooks.populate({ schema }),
       commonHooks.serialize(serializeSchema),
+      userGetAfter()
     ],
     create: [],
     update: [],

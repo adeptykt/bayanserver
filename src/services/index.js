@@ -11,6 +11,7 @@ const notifications = require('./notifications/notifications.service.js');
 const cards = require('./cards/cards.service.js');
 const certificates = require('./certificates/certificates.service.js');
 const redemptions = require('./redemptions/redemptions.service.js');
+const ecredemptions = require('./ecredemptions/ecredemptions.service.js');
 const orders = require('./orders/orders.service.js');
 const elcerts = require('./elcerts/elcerts.service.js');
 
@@ -28,6 +29,7 @@ module.exports = function () {
   app.configure(cards);
   app.configure(certificates);
   app.configure(redemptions);
+  app.configure(ecredemptions);
   app.configure(orders);
   app.configure(elcerts);
 };
